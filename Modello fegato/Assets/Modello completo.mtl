@@ -1,0 +1,54 @@
+﻿
+newmtl Material-0
+Kd 0.7 0.7 0.7 
+Ka 0.01 0.01 0.01 
+Ks 0.01 0.01 0.01 
+d 1
+
+newmtl Mtl
+Kd 1 1 1 
+Ka 0 0 0 
+Ks 0.3 0.3 0.3 
+d 1
+
+newmtl Mtl1
+Kd 1 1 1 
+Ka 0 0 0 
+Ks 0.3 0.3 0.3 
+d 1
+
+newmtl Mtl2
+Kd 1 1 1 
+Ka 0 0 0 
+Ks 0.3 0.3 0.3 
+d 1
+
+newmtl Mtl3
+Kd 1 1 1 
+Ka 0 0 0 
+Ks 0.3 0.3 0.3 
+d 1
+
+newmtl Mtl4
+Kd 1 1 1 
+Ka 0 0 0 
+Ks 0.3 0.3 0.3 
+d 1
+
+newmtl Mtl5
+Kd 1 1 1 
+Ka 0 0 0 
+Ks 0.3 0.3 0.3 
+d 1
+
+newmtl Mtl6
+Kd 0.298039 0.298039 0.298039 
+Ka 0 0 0 
+Ks 0.14902 0.14902 0.14902 
+d 1
+
+newmtl Mtl7
+Kd 0.317647 0.247059 0.207843 
+Ka 0 0 0 
+Ks 0.158824 0.123529 0.103922 
+d 1

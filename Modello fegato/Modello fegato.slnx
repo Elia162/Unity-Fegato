@@ -1,0 +1,5 @@
+<Solution>
+  <Project Path="Assembly-CSharp.csproj" />
+  <Project Path="Ultraleap.Tracking.PhysicalHandsExamples.csproj" Id="fbe1a2a0-653e-05c9-7dd6-eb014e4d0a92" />
+  <Project Path="Ultraleap.PhysicalHandsExamples.Editor.csproj" Id="005293e7-9495-f73c-e53f-e2104fbbd7da" />
+</Solution>
