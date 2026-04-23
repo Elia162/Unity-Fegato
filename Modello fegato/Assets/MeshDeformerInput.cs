@@ -77,6 +77,7 @@ public class MeshDeformerInput : MonoBehaviour
         {
             string cellaCorrente = closestCell.closestObject.name;
             CalcolaP(cellaCorrente);
+            Debug.Log("is touching: " + isTouching);
             //CalcolaPYeoh(cellaCorrente);
 
             UpdateForceFromTravel();
