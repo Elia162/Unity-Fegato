@@ -10,17 +10,12 @@ public class GestoreDatiRandom : MonoBehaviour
     public struct Variabili
     {
         public string idOriginale;
+        public float knee, y0, m1, m2, k;
 
-        // Tutti i 5 parametri utili
-        public float knee;
-        public float y0;
-        public float m1;
-        public float m2;
-        public float k;
-
-        public Variabili(string idOrig, float valKnee, float valY0, float valM1, float valM2, float valK)
+        // Rinominati i parametri in valKnee, valY0, ecc. per evitare il conflitto
+        public Variabili(string id, float valKnee, float valY0, float valM1, float valM2, float valK)
         {
-            idOriginale = idOrig;
+            idOriginale = id;
             knee = valKnee;
             y0 = valY0;
             m1 = valM1;
@@ -29,15 +24,8 @@ public class GestoreDatiRandom : MonoBehaviour
         }
     }
 
-    [Header("Configurazione File")]
-    [Tooltip("Trascina qui il file .csv esportato da Excel")]
     public TextAsset fileCSV;
-
-    [Header("Le Celle che 'iniziano' lo scambio")]
-    [Tooltip("Scrivi qui i nomi delle celle che devono scambiarsi i parametri")]
-    private List<string> celleDaMischiare = new List<string> { "B1", "C4", "F5", "H2"};
-
-    // Il nostro dizionario principale
+    private List<string> celleDaMischiare = new List<string> { "B1", "C4", "F5", "H2" };
     private Dictionary<string, Variabili> database = new Dictionary<string, Variabili>();
 
     void Awake()
@@ -45,135 +33,80 @@ public class GestoreDatiRandom : MonoBehaviour
         if (Instance == null)
         {
             Instance = this;
-            // Inizializza il generatore casuale basato sul tempo per avere scambi sempre diversi
             Random.InitState((int)System.DateTime.Now.Ticks);
             PopolaEmescolaDatabase();
+            StampaTabellaInConsole();
         }
-        else
-        {
-            Destroy(gameObject);
-        }
+        else Destroy(gameObject);
     }
 
     void PopolaEmescolaDatabase()
     {
-        if (fileCSV == null)
-        {
-            Debug.LogError("ERRORE: Non hai assegnato il file CSV nello script!");
-            return;
-        }
+        if (fileCSV == null) return;
 
         database.Clear();
-
         string[] righe = fileCSV.text.Split(new char[] { '\n', '\r' }, System.StringSplitOptions.RemoveEmptyEntries);
+        Dictionary<string, Variabili> datiCSV = new Dictionary<string, Variabili>();
 
-        // --- 1. LETTURA DEL CSV ---
-        Dictionary<string, Variabili> datiDalCSV = new Dictionary<string, Variabili>();
-
-        for (int i = 1; i < righe.Length; i++) // Salta l'intestazione
+        for (int i = 1; i < righe.Length; i++)
         {
-            string[] celle = righe[i].Split(';');
-
-            if (celle.Length >= 7)
+            string[] c = righe[i].Split(',');
+            if (c.Length >= 7)
             {
-                string idCella = celle[0].Trim();
-
-                // --- FIX: Ignoriamo le righe vuote generate da Excel ---
-                if (string.IsNullOrEmpty(idCella))
-                    continue;
-
-                // --- FIX: Evitiamo crash se hai per sbaglio dei duplicati veri nel CSV ---
-                if (datiDalCSV.ContainsKey(idCella))
-                {
-                    Debug.LogWarning($"Attenzione: ID '{idCella}' duplicato nel CSV. Lo ignoro.");
-                    continue;
-                }
-
-                // Mappatura delle colonne: 2=knee | 3=y0 | 4=m1 | 5=m2 | 6=k
-                // (La colonna 1 'Profondità' viene ignorata in automatico)
-                float valKnee = ParseFloat(celle[2]);
-                float valY0 = ParseFloat(celle[3]);
-                float valM1 = ParseFloat(celle[4]);
-                float valM2 = ParseFloat(celle[5]);
-                float valK = ParseFloat(celle[6]);
-
-                datiDalCSV.Add(idCella, new Variabili(idCella, valKnee, valY0, valM1, valM2, valK));
+                string id = c[0].Trim();
+                if (string.IsNullOrEmpty(id) || datiCSV.ContainsKey(id)) continue;
+                datiCSV.Add(id, new Variabili(id, ParseFloat(c[2]), ParseFloat(c[3]), ParseFloat(c[4]), ParseFloat(c[5]), ParseFloat(c[6])));
             }
         }
 
-        // --- 2. GENERAZIONE DELLA GRIGLIA COMPLETA (Da A1 a I6) ---
-        for (char lettera = 'A'; lettera <= 'I'; lettera++)
+        // Popolamento griglia
+        for (char l = 'A'; l <= 'I'; l++)
         {
-            for (int numero = 1; numero <= 6; numero++)
+            for (int n = 1; n <= 6; n++)
             {
-                string nomeCella = lettera.ToString() + numero.ToString();
-
-                if (datiDalCSV.ContainsKey(nomeCella))
-                {
-                    var d = datiDalCSV[nomeCella];
-                    database.Add(nomeCella, new Variabili(nomeCella, d.knee, d.y0, d.m1, d.m2, d.k));
-                }
-                else if (datiDalCSV.ContainsKey("Others"))
-                {
-                    var d = datiDalCSV["Others"];
-                    database.Add(nomeCella, new Variabili("Others", d.knee, d.y0, d.m1, d.m2, d.k));
-                }
-                else
-                {
-                    database.Add(nomeCella, new Variabili("Sconosciuto", 0, 0, 0, 0, 0));
-                }
+                string nome = l.ToString() + n.ToString();
+                if (datiCSV.ContainsKey(nome)) database.Add(nome, datiCSV[nome]);
+                else if (datiCSV.ContainsKey("Others")) database.Add(nome, datiCSV["Others"]);
+                else database.Add(nome, new Variabili("Sconosciuto", 0, 0, 0, 0, 0));
             }
         }
 
-        // --- 3. LOGICA DI SCAMBIO CASUALE ---
-        List<string> tutteLeChiavi = new List<string>(database.Keys);
-
-        Debug.Log("--- INIZIO SCAMBI ---");
-
-        foreach (string cellaTarget in celleDaMischiare)
+        // Scambio
+        List<string> chiavi = new List<string>(database.Keys);
+        foreach (string target in celleDaMischiare)
         {
-            if (database.ContainsKey(cellaTarget))
+            if (database.ContainsKey(target))
             {
-                // Pesca un partner a caso da TUTTA la griglia creata
-                string partnerCasuale = tutteLeChiavi[Random.Range(0, tutteLeChiavi.Count)];
-
-                if (partnerCasuale == cellaTarget)
-                {
-                    Debug.Log($"[NESSUN CAMBIO] {cellaTarget} ha pescato casualmente se stessa! Mantiene i parametri originali di {database[cellaTarget].idOriginale}.");
-                }
-                else
-                {
-                    // Esegue lo scambio di TUTTI E 5 i valori
-                    Variabili temp = database[cellaTarget];
-                    database[cellaTarget] = database[partnerCasuale];
-                    database[partnerCasuale] = temp;
-
-                    Debug.Log($"[SCAMBIO] {cellaTarget} ha preso i parametri di {partnerCasuale}. La cella {partnerCasuale} ha preso quelli di {database[partnerCasuale].idOriginale}.");
-                }
+                string partner = chiavi[Random.Range(0, chiavi.Count)];
+                Variabili temp = database[target];
+                database[target] = database[partner];
+                database[partner] = temp;
             }
         }
-
-        Debug.Log("--- SCAMBI TERMINATI ---");
     }
 
-    float ParseFloat(string valore)
+    private void StampaTabellaInConsole()
     {
-        valore = valore.Replace(",", ".");
-        if (float.TryParse(valore, NumberStyles.Any, CultureInfo.InvariantCulture, out float result))
+        Debug.Log("--- DATABASE PARAMETRI (Tabella) ---");
+        string format = "| {0,-6} | {1,-8} | {2,-8} | {3,-8} | {4,-8} | {5,-8} |";
+        Debug.Log(string.Format(format, "Cella", "Knee", "Y0", "M1", "M2", "K"));
+        Debug.Log(new string('-', 60));
+
+        foreach (var entry in database)
         {
-            return result;
+            var d = entry.Value;
+            Debug.Log(string.Format(format, entry.Key, d.knee.ToString("F2"), d.y0.ToString("F2"), d.m1.ToString("F2"), d.m2.ToString("F2"), d.k.ToString("F2")));
         }
-        return 0f;
+    }
+
+    float ParseFloat(string v)
+    {
+        v = v.Replace(",", ".");
+        return float.TryParse(v, NumberStyles.Any, CultureInfo.InvariantCulture, out float r) ? r : 0f;
     }
 
     public Variabili OttieniValori(string id)
     {
-        if (database.ContainsKey(id))
-        {
-            return database[id];
-        }
-
-        Debug.LogWarning($"Cella '{id}' non trovata!");
-        return new Variabili("Sconosciuto", 0, 0, 0, 0, 0);
+        return database.ContainsKey(id) ? database[id] : new Variabili("Sconosciuto", 0, 0, 0, 0, 0);
     }
 }
